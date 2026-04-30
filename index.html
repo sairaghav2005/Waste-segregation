@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste Segregation AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            padding: 35px;
+            margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 
+                0 35px 60px -15px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .upload-area:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .upload-icon {
+            font-size: 4.5rem;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 10px 20px rgba(102, 126, 234, 0.3));
+        }
+
+        .upload-text {
+            color: #333;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 0.95rem;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-container {
+            margin-top: 25px;
+            display: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .preview-container.active {
+            display: block;
+        }
+
+        .preview-image {
+            width: 100%;
+            max-height: 350px;
+            object-fit: contain;
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(102, 126, 234, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(102, 126, 234, 0.1);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 25px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .result {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .category-badge.recyclable {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .category-badge.organic {
+            background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+        }
+
+        .category-badge.hazardous {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .category-icon {
+            font-size: 1.8rem;
+        }
+
+        .prediction-section {
+            margin-bottom: 25px;
+        }
+
+        .prediction-title {
+            font-size: 0.85rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .prediction-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: -0.02em;
+        }
+
+        .dump-location {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%);
+            border-left: 5px solid #2196f3;
+            padding: 25px;
+            border-radius: 16px;
+            margin-top: 25px;
+            box-shadow: 0 10px 30px rgba(33, 150, 243, 0.1);
+        }
+
+        .dump-title {
+            font-weight: 700;
+            color: #1565c0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.05rem;
+        }
+
+        .dump-text {
+            color: #1976d2;
+            line-height: 1.7;
+            font-size: 1.05rem;
+            font-weight: 500;
+        }
+
+        .confidence-bar {
+            margin-bottom: 25px;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .confidence-track {
+            height: 12px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .advice-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+            border-left: 5px solid #ffc107;
+            padding: 25px;
+            border-radius: 16px;
+            margin-top: 25px;
+            box-shadow: 0 10px 30px rgba(255, 193, 7, 0.1);
+        }
+
+        .advice-title {
+            font-weight: 700;
+            color: #b78900;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.05rem;
+        }
+
+        .advice-text {
+            color: #b78900;
+            line-height: 1.7;
+            font-weight: 500;
+        }
+
+        .error {
+            display: none;
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%);
+            border: 1px solid rgba(244, 67, 54, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            animation: shake 0.5s ease;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .error-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .error-text {
+            color: #c62828;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 25px;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        /* History Styles */
+        .history-container {
+            display: none;
+        }
+
+        .history-container.active {
+            display: block;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .history-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .clear-history-btn {
+            background: rgba(244, 67, 54, 0.1);
+            color: #c62828;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .clear-history-btn:hover {
+            background: rgba(244, 67, 54, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .history-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-thumbnail {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-prediction {
+            font-weight: 700;
+            color: #1a1a2e;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .history-category {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .history-category.recyclable {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .history-category.organic {
+            background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+        }
+
+        .history-category.hazardous {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .history-timestamp {
+            color: #999;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .history-confidence {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-history-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-history-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 25px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .upload-icon {
+                font-size: 3.5rem;
+            }
+
+            .history-item {
+                flex-direction: column;
+            }
+
+            .history-thumbnail {
+                width: 100%;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>♻️ Waste Segregation AI</h1>
+            <p>Advanced AI-powered waste analysis and recycling guidance</p>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn active" id="analyzeTab">
+                <span>🔍</span> Analyze
+            </button>
+            <button class="nav-btn" id="historyTab">
+                <span>📋</span> History
+            </button>
+        </div>
+
+        <!-- Analyze Section -->
+        <div id="analyzeSection">
+            <div class="card">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">Drag & drop your image here</div>
+                    <div class="upload-subtext">or click to browse</div>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <div class="preview-container" id="previewContainer">
+                    <img class="preview-image" id="previewImage" alt="Preview">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" id="analyzeBtn" disabled>
+                        <span>🔍</span> Analyze Waste
+                    </button>
+                    <button class="btn btn-secondary" id="resetBtn">
+                        <span>🔄</span> Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="card loading" id="loading">
+                <div class="spinner"></div>
+                <div class="loading-text">Analyzing your image with AI...</div>
+            </div>
+
+            <div class="card result" id="result">
+                <div class="category-badge" id="categoryBadge">
+                    <span class="category-icon" id="categoryIcon">♻️</span>
+                    <span id="categoryText">Recyclable</span>
+                </div>
+
+                <div class="prediction-section">
+                    <div class="prediction-title">AI Prediction</div>
+                    <div class="prediction-text" id="predictionText">Plastic Bottle</div>
+                </div>
+
+                <div class="confidence-bar">
+                    <div class="confidence-label">
+                        <span>AI Confidence</span>
+                        <span id="confidenceValue">95%</span>
+                    </div>
+                    <div class="confidence-track">
+                        <div class="confidence-fill" id="confidenceFill" style="width: 95%"></div>
+                    </div>
+                </div>
+
+                <div class="dump-location">
+                    <div class="dump-title">
+                        <span>🗑️</span> Where to Dump
+                    </div>
+                    <div class="dump-text" id="dumpText">
+                        Blue recycling bin / Plastic recycling container
+                    </div>
+                </div>
+
+                <div class="advice-box">
+                    <div class="advice-title">
+                        <span>💡</span> AI Advice
+                    </div>
+                    <div class="advice-text" id="adviceText">
+                        Rinse the bottle with water to remove any residue. Remove the cap and label if possible. Place in the recycling bin marked for plastics.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card error" id="error">
+                <div class="error-icon">⚠️</div>
+                <div class="error-text" id="errorText">
+                    Failed to analyze image. Please try again.
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="card history-container" id="historySection">
+            <div class="history-header">
+                <div class="history-title">📋 Analysis History</div>
+                <button class="clear-history-btn" id="clearHistoryBtn">
+                    <span>🗑️</span> Clear All
+                </button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-history">
+                    <div class="empty-history-icon">📭</div>
+                    <div class="empty-history-text">No analysis history yet</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Powered by AWS Rekognition • Premium AI Solution
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+        const analyzeTab = document.getElementById('analyzeTab');
+        const historyTab = document.getElementById('historyTab');
+        const analyzeSection = document.getElementById('analyzeSection');
+        const historySection = document.getElementById('historySection');
+        const historyList = document.getElementById('historyList');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        let selectedFile = null;
+        let currentImageBase64 = null;
+
+        // Tab switching
+        analyzeTab.addEventListener('click', () => {
+            analyzeTab.classList.add('active');
+            historyTab.classList.remove('active');
+            analyzeSection.style.display = 'block';
+            historySection.classList.remove('active');
+        });
+
+        historyTab.addEventListener('click', () => {
+            historyTab.classList.add('active');
+            analyzeTab.classList.remove('active');
+            historySection.classList.add('active');
+            analyzeSection.style.display = 'none';
+            loadHistory();
+        });
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop events
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            handleFile(file);
+        });
+
+        // Handle file selection
+        function handleFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                selectedFile = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    currentImageBase64 = e.target.result;
+                    previewContainer.classList.add('active');
+                    uploadArea.style.display = 'none';
+                    analyzeBtn.disabled = false;
+                    hideResults();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Hide results
+        function hideResults() {
+            result.classList.remove('active');
+            error.classList.remove('active');
+        }
+
+        // Analyze button click
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            hideResults();
+            loading.classList.add('active');
+            analyzeBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            try {
+                const response = await fetch('http://localhost:5000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const data = await response.json();
+                displayResult(data);
+                saveToHistory(data);
+            } catch (err) {
+                displayError('Failed to analyze image. Please ensure the backend server is running at localhost:5000');
+            } finally {
+                loading.classList.remove('active');
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        // Display result
+        function displayResult(data) {
+            const categoryBadge = document.getElementById('categoryBadge');
+            const categoryIcon = document.getElementById('categoryIcon');
+            const categoryText = document.getElementById('categoryText');
+            const predictionText = document.getElementById('predictionText');
+            const confidenceValue = document.getElementById('confidenceValue');
+            const confidenceFill = document.getElementById('confidenceFill');
+            const dumpText = document.getElementById('dumpText');
+            const adviceText = document.getElementById('adviceText');
+
+            // Set category styling
+            categoryBadge.className = 'category-badge';
+            if (data.category.toLowerCase() === 'recyclable') {
+                categoryBadge.classList.add('recyclable');
+                categoryIcon.textContent = '♻️';
+            } else if (data.category.toLowerCase() === 'organic') {
+                categoryBadge.classList.add('organic');
+                categoryIcon.textContent = '🍎';
+            } else if (data.category.toLowerCase() === 'hazardous') {
+                categoryBadge.classList.add('hazardous');
+                categoryIcon.textContent = '⚠️';
+            } else {
+                categoryBadge.classList.add('recyclable');
+                categoryIcon.textContent = '♻️';
+            }
+
+            categoryText.textContent = data.category;
+
+            // Set single prediction
+            predictionText.textContent = data.prediction || 'Unknown Item';
+
+            // Set confidence
+            const confidence = data.confidence || 90;
+            confidenceValue.textContent = confidence + '%';
+            confidenceFill.style.width = confidence + '%';
+
+            // Set dump location
+            dumpText.textContent = data.dump_location || 'Contact local waste management';
+
+            // Set advice
+            adviceText.textContent = data.advice;
+
+            result.classList.add('active');
+        }
+
+        // Display error
+        function displayError(message) {
+            document.getElementById('errorText').textContent = message;
+            error.classList.add('active');
+        }
+
+        // Reset button click
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            currentImageBase64 = null;
+            fileInput.value = '';
+            previewImage.src = '';
+            previewContainer.classList.remove('active');
+            uploadArea.style.display = 'block';
+            analyzeBtn.disabled = true;
+            hideResults();
+        });
+
+        // History functions
+        function saveToHistory(data) {
+            const historyItem = {
+                id: Date.now(),
+                prediction: data.prediction,
+                category: data.category,
+                confidence: data.confidence,
+                timestamp: new Date().toLocaleString(),
+                image: currentImageBase64
+            };
+
+            let history = JSON.parse(localStorage.getItem('wasteHistory') || '[]');
+            history.unshift(historyItem);
+            
+            // Keep only last 20 items
+            if (history.length > 20) {
+                history = history.slice(0, 20);
+            }
+            
+            localStorage.setItem('wasteHistory', JSON.stringify(history));
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('wasteHistory') || '[]');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = `
+                    <div class="empty-history">
+                        <div class="empty-history-icon">📭</div>
+                        <div class="empty-history-text">No analysis history yet</div>
+                    </div>
+                `;
+                return;
+            }
+
+            historyList.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <img class="history-thumbnail" src="${item.image}" alt="${item.prediction}">
+                    <div class="history-info">
+                        <div class="history-prediction">${item.prediction}</div>
+                        <span class="history-category ${item.category.toLowerCase()}">${item.category}</span>
+                        <div class="history-timestamp">${item.timestamp}</div>
+                        <div class="history-confidence">Confidence: ${item.confidence}%</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all history?')) {
+                localStorage.removeItem('wasteHistory');
+                loadHistory();
+            }
+        });
+    </script>
+</body>
+</html>
