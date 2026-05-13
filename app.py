@@ -82,9 +82,11 @@ def detect_category(labels):
             if recyclable_item in label:
                 return 'recyclable'
     
-    return 'unknown'
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy'})
 
-
+@app.route('/predict', methods=['POST'])
 @app.route('/upload', methods=['POST'])
 def upload_image():
     try:
