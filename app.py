@@ -1,12 +1,19 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import boto3
 import os
 from io import BytesIO
 from PIL import Image
+from dotenv import load_dotenv
 
-app = Flask(__name__)
-CORS(app)
+# Load environment variables from .env file if it exists
+load_dotenv()
+
+app = Flask(__name__, static_folder='.')
+
+# Allow ALL origins so Amplify frontend can call this Render backend
+# You can restrict to your Amplify URL e.g. origins=["https://main.xxxxx.amplifyapp.com"]
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
 
 # AWS Configuration
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
@@ -274,6 +281,10 @@ def upload_image():
         print(f"Error: {str(e)}")
         return jsonify({'error': f'Failed to analyze image: {str(e)}'}), 500
 
+
+@app.route('/', methods=['GET'])
+def index():
+    return send_from_directory('.', 'index.html')
 
 @app.route('/health', methods=['GET'])
 def health_check():

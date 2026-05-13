@@ -780,6 +780,14 @@
     </div>
 
     <script>
+        // ============================================================
+        // 🔧 CONFIGURATION — Update BACKEND_URL after Render deployment
+        // Example: 'https://waste-backend.onrender.com'
+        // Leave empty string '' to use relative URL (local dev only)
+        // ============================================================
+        const BACKEND_URL = 'https://waste-segregation-backend.onrender.com';
+        // ============================================================
+
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const previewContainer = document.getElementById('previewContainer');
@@ -877,7 +885,7 @@
             formData.append('image', selectedFile);
 
             try {
-                const response = await fetch('http://localhost:5000/upload', {
+                const response = await fetch(`${BACKEND_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 });
@@ -890,7 +898,7 @@
                 displayResult(data);
                 saveToHistory(data);
             } catch (err) {
-                displayError('Failed to analyze image. Please ensure the backend server is running at localhost:5000');
+                displayError('Failed to analyze image. Please try again.');
             } finally {
                 loading.classList.remove('active');
                 analyzeBtn.disabled = false;
@@ -907,6 +915,9 @@
             const confidenceFill = document.getElementById('confidenceFill');
             const dumpText = document.getElementById('dumpText');
             const adviceText = document.getElementById('adviceText');
+
+            // Hide error when showing successful result
+            error.classList.remove('active');
 
             // Set category styling
             categoryBadge.className = 'category-badge';
