@@ -10,57 +10,72 @@
         rel="stylesheet">
 
     <style>
-        /* ===== YOUR FULL CSS (UNCHANGED) ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
+            margin: 0;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            min-height: 100vh;
+            color: white;
         }
 
         .container {
-            max-width: 700px;
-            width: 100%;
+            width: 90%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
         }
 
-        .card {
-            background: white;
-            border-radius: 20px;
+        h1 {
+            text-align: center;
+        }
+
+        .upload-box {
+            border: 2px dashed #fff;
             padding: 30px;
-        }
-
-        .upload-area {
-            border: 2px dashed #667eea;
-            padding: 40px;
             text-align: center;
             cursor: pointer;
-        }
-
-        .preview-image {
-            width: 100%;
             margin-top: 20px;
             border-radius: 10px;
         }
 
-        .btn {
-            padding: 12px;
-            border: none;
-            cursor: pointer;
-            margin-top: 15px;
+        input {
+            display: none;
         }
 
-        .btn-primary {
+        img {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border: none;
             background: #667eea;
             color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        button:disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -68,48 +83,51 @@
 <body>
 
     <div class="container">
-        <div class="card">
+        <h1>♻️ Waste Segregation AI</h1>
 
-            <h1>♻️ Waste Segregation AI</h1>
-
-            <div class="upload-area" id="uploadArea">
-                <p>Click or drag image here</p>
-                <input type="file" id="fileInput" hidden>
-            </div>
-
-            <img id="preview" class="preview-image" style="display:none;">
-
-            <button class="btn btn-primary" id="analyzeBtn" disabled>
-                Analyze
-            </button>
-
-            <div id="result"></div>
-
+        <div class="upload-box" id="uploadBox">
+            Click or Drag Image Here
         </div>
+
+        <input type="file" id="fileInput" accept="image/*">
+
+        <img id="preview">
+
+        <button id="analyzeBtn" disabled>Analyze Image</button>
+
+        <div class="result" id="result"></div>
     </div>
 
     <script>
         /* =========================
-           🔥 BACKEND CONFIG (IMPORTANT)
+           🔥 YOUR RENDER BACKEND
         ========================= */
         const BACKEND_URL = "https://waste-segregation-1-w9qr.onrender.com";
 
         /* =========================
            ELEMENTS
         ========================= */
-        const uploadArea = document.getElementById("uploadArea");
+        const uploadBox = document.getElementById("uploadBox");
         const fileInput = document.getElementById("fileInput");
         const preview = document.getElementById("preview");
         const analyzeBtn = document.getElementById("analyzeBtn");
         const result = document.getElementById("result");
 
         let selectedFile = null;
+        
+        // Wake up Render backend on load
+        window.onload = () => {
+            fetch(BACKEND_URL).catch(e => console.log("Waking up..."));
+        };
 
         /* =========================
-           UPLOAD HANDLING
+           UPLOAD CLICK
         ========================= */
-        uploadArea.onclick = () => fileInput.click();
+        uploadBox.onclick = () => fileInput.click();
 
+        /* =========================
+           FILE SELECT
+        ========================= */
         fileInput.onchange = (e) => {
             selectedFile = e.target.files[0];
 
@@ -129,31 +147,37 @@
         analyzeBtn.onclick = async () => {
             if (!selectedFile) return;
 
+            analyzeBtn.innerText = "Analyzing...";
+
             const formData = new FormData();
             formData.append("image", selectedFile);
 
-            analyzeBtn.innerText = "Analyzing...";
-
             try {
-                const res = await fetch(`${BACKEND_URL}/upload`, {
+                const response = await fetch(`${BACKEND_URL}/upload`, {
                     method: "POST",
                     body: formData
                 });
 
-                const data = await res.json();
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Server error");
+                }
 
                 result.innerHTML = `
             <h3>Category: ${data.category}</h3>
-            <p>Prediction: ${data.prediction}</p>
-            <p>Confidence: ${data.confidence}%</p>
-            <p>Advice: ${data.advice}</p>
+            <p><b>Prediction:</b> ${data.prediction}</p>
+            <p><b>Confidence:</b> ${data.confidence}%</p>
+            <p><b>Advice:</b> ${data.advice}</p>
+            <p><b>Dump Location:</b> ${data.dump_location}</p>
         `;
 
             } catch (err) {
-                result.innerHTML = "<p>Error connecting to backend</p>";
+                console.error("Connection Error:", err);
+                result.innerHTML = `❌ Connection Error: ${err.message}. <br><small>Make sure the backend is awake (it takes 30s on first load).</small>`;
             }
 
-            analyzeBtn.innerText = "Analyze";
+            analyzeBtn.innerText = "Analyze Image";
         };
     </script>
 
